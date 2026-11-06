@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101827">
+<title>আমার সম্পদ | My Assets</title>
+<style>
+:root{--bg:#101827;--panel:#192538;--card:#fff;--ink:#172033;--muted:#687386;--blue:#1677d2;--line:#e6eaf0;--green:#12805c;--red:#c43d4b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff;padding:env(safe-area-inset-top) 12px calc(24px + env(safe-area-inset-bottom))}
+header{max-width:760px;margin:0 auto;padding:22px 4px 14px}h1{font-size:25px;margin:0 0 5px}header p{margin:0;color:#b8c4d5;font-size:13px}
+main{max-width:760px;margin:auto}.summary{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:12px}.stat{background:var(--panel);border:1px solid #29394f;border-radius:14px;padding:13px}.stat small{color:#b9c5d5}.stat strong{display:block;font-size:20px;margin-top:5px;overflow-wrap:anywhere}
+nav{display:flex;gap:7px;overflow:auto;padding:4px 0 12px;scrollbar-width:none}nav button{white-space:nowrap;border:1px solid #34445b;background:#1b2a3f;color:#dce6f4;border-radius:20px;padding:9px 13px;font-size:13px}nav button.active{background:#1677d2;border-color:#1677d2;color:#fff}
+.panel{display:none;background:#fff;color:var(--ink);border-radius:16px;padding:15px;margin-bottom:12px}.panel.active{display:block}.panel h2{font-size:18px;margin:0 0 5px}.hint{font-size:12px;color:var(--muted);line-height:1.5;margin:0 0 13px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.field{min-width:0}.field.full{grid-column:1/-1}label{display:block;font-size:12px;color:#586477;margin:0 0 5px}input,select,textarea{width:100%;border:1px solid #d8dee8;border-radius:10px;padding:11px 10px;font-size:16px;background:#fff;color:#172033;min-width:0}input:focus,select:focus{outline:2px solid #9bcaf5;border-color:#1677d2}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}button{cursor:pointer}.primary,.secondary,.danger{border:0;border-radius:10px;padding:11px 14px;font-size:14px}.primary{background:var(--blue);color:white}.secondary{background:#eaf2fb;color:#155a9c}.danger{background:#fff0f1;color:var(--red)}
+.list{margin-top:13px;border-top:1px solid var(--line)}.item{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}.item strong{display:block;font-size:14px}.item small{display:block;color:var(--muted);font-size:12px;margin-top:3px}.amount{font-weight:700;white-space:nowrap;font-size:14px}.empty{color:#8791a1;font-size:13px;padding:14px 0}
+.note{background:#fff8e7;border:1px solid #f0dfb4;color:#72551c;border-radius:11px;padding:11px;font-size:12px;line-height:1.5;margin-top:12px}
+.result{background:#eef6ff;border-radius:12px;padding:13px;margin-top:12px}.result strong{font-size:20px;color:#155a9c}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.toolbar button{flex:1}
+footer{max-width:760px;margin:14px auto;color:#aab6c7;font-size:11px;line-height:1.5;text-align:center}
+@media(min-width:600px){.summary{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header><h1>আমার সম্পদ</h1><p>My Assets · ব্যক্তিগত ও ব্যবসায়িক হিসাব</p></header>
+<main>
+<section class="summary">
+ <div class="stat"><small>মোট সম্পদ</small><strong id="sumAssets">৳ 0.00</strong></div>
+ <div class="stat"><small>মোট দেনা</small><strong id="sumLiabilities">৳ 0.00</strong></div>
+ <div class="stat"><small>নিট সম্পদ</small><strong id="sumNet">৳ 0.00</strong></div>
+ <div class="stat"><small>রেকর্ড</small><strong id="sumCount">০</strong></div>
+</section>
+<nav id="tabs">
+ <button class="active" data-tab="assets">সম্পদ</button><button data-tab="receivables">পাওনা</button><button data-tab="debts">দেনা</button><button data-tab="business">ব্যবসা</button><button data-tab="investments">বিনিয়োগ</button><button data-tab="zakat">যাকাত</button><button data-tab="backup">ব্যাকআপ</button>
+</nav>
+
+<section class="panel active" id="assets">
+<h2>সম্পদের হিসাব</h2><p class="hint">নগদ টাকা, ব্যাংক, সোনা, জমি বা অন্য সম্পদ যোগ করুন।</p>
+<div class="formgrid">
+<div class="field"><label>সম্পদের নাম</label><input id="aName" placeholder="যেমন: ব্যাংক অ্যাকাউন্ট"></div>
+<div class="field"><label>ধরন</label><select id="aType"><option>নগদ টাকা</option><option>ব্যাংক</option><option>সোনা/রুপা</option><option>জমি/সম্পত্তি</option><option>ব্যবসার মালামাল</option><option>অন্যান্য</option></select></div>
+<div class="field"><label>পরিমাণ</label><input id="aAmount" inputmode="decimal" type="number" min="0" step="any" placeholder="0"></div>
+<div class="field"><label>মুদ্রা</label><select id="aCurrency"><option>BDT</option><option>QAR</option><option>USD</option><option>SAR</option><option>AED</option></select></div>
+<div class="field full"><label>তারিখ / নোট</label><input id="aNote" placeholder="ঐচ্ছিক"></div>
+</div><div class="actions"><button class="primary" onclick="addAsset()">সম্পদ যোগ করুন</button></div><div class="list" id="assetList"></div>
+</section>
+
+<section class="panel" id="receivables">
+<h2>মানুষের কাছে পাওনা</h2><p class="hint">একই ব্যক্তির নামে একাধিক পাওনা আলাদা রেকর্ড হিসেবে যোগ করতে পারবেন। ফেরত পেলে বাকি টাকা আপডেট করুন।</p>
+<div class="formgrid">
+<div class="field"><label>ব্যক্তির নাম</label><input id="rName" placeholder="নাম"></div><div class="field"><label>কোন খাতে / কারণ</label><input id="rReason" placeholder="যেমন: ধার"></div>
+<div class="field"><label>মোট দিয়েছেন (BDT)</label><input id="rAmount" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></div><div class="field"><label>ফেরত পেয়েছেন (BDT)</label><input id="rPaid" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></div>
+<div class="field"><label>ফেরতের তারিখ</label><input id="rDate" type="date"></div><div class="field"><label>মোবাইল / নোট</label><input id="rNote" placeholder="ঐচ্ছিক"></div>
+</div><div class="actions"><button class="primary" onclick="addReceivable()">পাওনা যোগ করুন</button></div><div class="list" id="receivableList"></div>
+</section>
+
+<section class="panel" id="debts">
+<h2>নিজের দেনা</h2><p class="hint">যার কাছে দেনা আছে, পরিমাণ ও পরিশোধের তথ্য লিখুন।</p>
+<div class="formgrid"><div class="field"><label>ব্যক্তি / প্রতিষ্ঠান</label><input id="dName" placeholder="নাম"></div><div class="field"><label>কারণ</label><input id="dReason" placeholder="যেমন: ধার"></div><div class="field"><label>মোট দেনা (BDT)</label><input id="dAmount" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></div><div class="field"><label>পরিশোধ করেছেন</label><input id="dPaid" type="number" inputmode="decimal" min="0" step="any" placeholder="0"></div></div>
+<div class="actions"><button class="primary" onclick="addDebt()">দেনা যোগ করুন</button></div><div class="list" id="debtList"></div>
+</section>
+
+<section class="panel" id="business">
+<h2>ব্যবসার হিসাব</h2><p class="hint">প্রতিটি ব্যবসার মূলধন, আয় ও খরচের প্রাথমিক রেকর্ড রাখুন।</p>
+<div class="formgrid"><div class="field"><label>ব্যবসার নাম</label><input id="bName" placeholder="যেমন: দোকান"></div><div class="field"><label>মূলধন (BDT)</label><input id="bCapital" type="number" inputmode="decimal" placeholder="0"></div><div class="field"><label>মোট আয় (BDT)</label><input id="bIncome" type="number" inputmode="decimal" placeholder="0"></div><div class="field"><label>মোট খরচ (BDT)</label><input id="bExpense" type="number" inputmode="decimal" placeholder="0"></div></div>
+<div class="actions"><button class="primary" onclick="addBusiness()">ব্যবসা যোগ করুন</button></div><div class="list" id="businessList"></div>
+</section>
+
+<section class="panel" id="investments">
+<h2>বিনিয়োগের হিসাব</h2><p class="hint">শেয়ার, জমি, পার্টনারশিপ বা অন্য বিনিয়োগের ক্রয়মূল্য ও বর্তমান মূল্য লিখুন।</p>
+<div class="formgrid"><div class="field"><label>বিনিয়োগের নাম</label><input id="iName" placeholder="যেমন: QSE শেয়ার"></div><div class="field"><label>ধরন</label><select id="iType"><option>শেয়ার</option><option>জমি/সম্পত্তি</option><option>পার্টনারশিপ</option><option>অন্যান্য</option></select></div><div class="field"><label>বিনিয়োগ (BDT)</label><input id="iCost" type="number" inputmode="decimal" placeholder="0"></div><div class="field"><label>বর্তমান মূল্য (BDT)</label><input id="iValue" type="number" inputmode="decimal" placeholder="0"></div></div>
+<div class="actions"><button class="primary" onclick="addInvestment()">বিনিয়োগ যোগ করুন</button></div><div class="list" id="investmentList"></div>
+</section>
+
+<section class="panel" id="zakat">
+<h2>যাকাত হিসাব — হানাফি</h2><p class="hint">যোগ্য সম্পদ থেকে বাদযোগ্য তাৎক্ষণিক দেনা বাদ দিয়ে আনুমানিক হিসাব দেখাবে। তথ্য যাচাই করে ব্যবহার করুন।</p>
+<div class="formgrid"><div class="field"><label>যাকাতযোগ্য সম্পদ (BDT)</label><input id="zAssets" type="number" inputmode="decimal" placeholder="0"></div><div class="field"><label>বাদযোগ্য দেনা (BDT)</label><input id="zDebt" type="number" inputmode="decimal" placeholder="0"></div><div class="field"><label>নিসাবের সীমা (BDT)</label><input id="zNisab" type="number" inputmode="decimal" placeholder="নিজে লিখুন"></div></div>
+<div class="actions"><button class="primary" onclick="calcZakat()">যাকাত হিসাব করুন</button></div><div class="result" id="zResult">এখানে হিসাব দেখাবে।</div>
+<div class="note">গুরুত্বপূর্ণ: নিসাবের জন্য স্বর্ণ/রুপার বাজারদর, হাওল, পাওনা আদায়ের সম্ভাবনা, গহনা, শেয়ার ও ব্যবসার মালামালের বিধান আলাদা করে যাচাই করতে হয়। এই প্রাথমিক ক্যালকুলেটর ফিকহি সিদ্ধান্ত দেয় না। নির্ভুল হিসাবের জন্য বিশ্বস্ত হানাফি আলেমের পরামর্শ নিন।</div>
+</section>
+
+<section class="panel" id="backup">
+<h2>ডাটা ব্যাকআপ</h2><p class="hint">এই সংস্করণে তথ্য শুধু এই ব্রাউজারের ফোনে সংরক্ষিত হয়। নিচে JSON ব্যাকআপ ডাউনলোড বা আগের ব্যাকআপ ফিরিয়ে আনতে পারবেন।</p>
+<div class="actions"><button class="primary" onclick="exportData()">ব্যাকআপ ডাউনলোড</button><button class="secondary" onclick="document.getElementById('importFile').click()">ব্যাকআপ ফিরিয়ে আনুন</button><input id="importFile" type="file" accept="application/json,.json" hidden onchange="importData(event)"></div>
+<div class="note">এটি এখনো এনক্রিপ্টেড ক্লাউড ব্যাকআপ নয়। ফোন বদলানোর আগে ব্যাকআপ ফাইল নিরাপদ স্থানে রাখুন। ফাইলটি অন্যের সঙ্গে শেয়ার করবেন না। অ্যাপের ডাটা/ব্রাউজার মুছে ফেললে ব্যাকআপ ছাড়া তথ্য হারাতে পারেন।</div>
+<div class="actions"><button class="danger" onclick="clearAll()">সব তথ্য মুছে ফেলুন</button></div>
+</section>
+</main>
+<footer>প্রাথমিক অফলাইন সংস্করণ · তথ্য আপনার এই ডিভাইসের ব্রাউজারে থাকে · এখনো Face ID, ক্লাউড সিঙ্ক বা বন্ধ অ্যাপে নোটিফিকেশন নেই</footer>
+<script>
+const KEY='myAssets_v1';
+let db=load();
+function load(){try{return JSON.parse(localStorage.getItem(KEY))||{assets:[],receivables:[],debts:[],business:[],investments:[]}}catch(e){return {assets:[],receivables:[],debts:[],business:[],investments:[]}}}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
+function val(id){return document.getElementById(id).value.trim()}
+function num(id){return Math.max(0,Number(val(id))||0)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function money(n,c='BDT'){return new Intl.NumberFormat('en-US',{maximumFractionDigits:2}).format(n||0)+' '+c}
+function addAsset(){if(!val('aName')||num('aAmount')<=0)return alert('সম্পদের নাম ও পরিমাণ দিন');db.assets.push({name:val('aName'),type:val('aType'),amount:num('aAmount'),currency:val('aCurrency'),note:val('aNote')});['aName','aAmount','aNote'].forEach(x=>document.getElementById(x).value='');save()}
+function addReceivable(){if(!val('rName')||num('rAmount')<=0)return alert('নাম ও মোট টাকা দিন');if(num('rPaid')>num('rAmount'))return alert('ফেরত পাওয়া টাকা মোট টাকার বেশি হতে পারে না');db.receivables.push({name:val('rName'),reason:val('rReason'),amount:num('rAmount'),paid:num('rPaid'),date:val('rDate'),note:val('rNote')});['rName','rReason','rAmount','rPaid','rDate','rNote'].forEach(x=>document.getElementById(x).value='');save()}
+function addDebt(){if(!val('dName')||num('dAmount')<=0)return alert('নাম ও দেনার পরিমাণ দিন');if(num('dPaid')>num('dAmount'))return alert('পরিশোধ মোট দেনার বেশি হতে পারে না');db.debts.push({name:val('dName'),reason:val('dReason'),amount:num('dAmount'),paid:num('dPaid')});['dName','dReason','dAmount','dPaid'].forEach(x=>document.getElementById(x).value='');save()}
+function addBusiness(){if(!val('bName'))return alert('ব্যবসার নাম দিন');db.business.push({name:val('bName'),capital:num('bCapital'),income:num('bIncome'),expense:num('bExpense')});['bName','bCapital','bIncome','bExpense'].forEach(x=>document.getElementById(x).value='');save()}
+function addInvestment(){if(!val('iName'))return alert('বিনিয়োগের নাম দিন');db.investments.push({name:val('iName'),type:val('iType'),cost:num('iCost'),value:num('iValue')});['iName','iCost','iValue'].forEach(x=>document.getElementById(x).value='');save()}
+function row(title,sub,amount,del){return `<div class="item"><div><strong>${esc(title)}</strong><small>${esc(sub)}</small></div><div style="text-align:right"><div class="amount">${esc(amount)}</div><button class="danger" style="padding:5px 8px;margin-top:5px;font-size:11px" onclick="${del}">মুছুন</button></div></div>`}
+function list(id,items,fn){document.getElementById(id).innerHTML=items.length?items.map((x,i)=>fn(x,i)).join(''):'<div class="empty">এখনো কোনো তথ্য যোগ করা হয়নি।</div>'}
+function del(k,i){if(confirm('এই রেকর্ডটি মুছবেন?')){db[k].splice(i,1);save()}}
+function render(){
+ list('assetList',db.assets,(x,i)=>row(x.name,x.type+' · '+x.note,money(x.amount,x.currency),`del('assets',${i})`));
+ list('receivableList',db.receivables,(x,i)=>row(x.name+' — '+x.reason,'তারিখ: '+(x.date||'দেওয়া হয়নি')+' · বাকি '+money(x.amount-x.paid),money(x.amount-x.paid),`del('receivables',${i})`));
+ list('debtList',db.debts,(x,i)=>row(x.name+' — '+x.reason,'পরিশোধ বাকি',money(x.amount-x.paid),`del('debts',${i})`));
+ list('businessList',db.business,(x,i)=>row(x.name,'মূলধন '+money(x.capital)+' · লাভ/ক্ষতি '+money(x.income-x.expense),money(x.capital+x.income-x.expense),`del('business',${i})`));
+ list('investmentList',db.investments,(x,i)=>row(x.name,x.type+' · ক্রয় '+money(x.cost)+' · লাভ/ক্ষতি '+money(x.value-x.cost),money(x.value),`del('investments',${i})`));
+ const assets=db.assets.reduce((s,x)=>s+x.amount*({BDT:1,QAR:0,USD:0,SAR:0,AED:0}[x.currency]??0),0)+db.business.reduce((s,x)=>s+x.capital+x.income-x.expense,0)+db.investments.reduce((s,x)=>s+x.value,0);
+ const rec=db.receivables.reduce((s,x)=>s+x.amount-x.paid,0), debt=db.debts.reduce((s,x)=>s+x.amount-x.paid,0);
+ document.getElementById('sumAssets').textContent=money(assets+rec);document.getElementById('sumLiabilities').textContent=money(debt);document.getElementById('sumNet').textContent=money(assets+rec-debt);
+ document.getElementById('sumCount').textContent=Object.values(db).reduce((s,a)=>s+a.length,0).toLocaleString('bn-BD');
+}
+function calcZakat(){const a=num('zAssets'),d=num('zDebt'),n=num('zNisab'),net=Math.max(0,a-d),r=document.getElementById('zResult');if(n<=0){r.textContent='নিসাবের বর্তমান সীমা লিখুন।';return}r.innerHTML=net>=n?`নিট যাকাতযোগ্য সম্পদ: <strong>${money(net)}</strong><br>আনুমানিক যাকাত (২.৫%): <strong>${money(net*.025)}</strong>`:`নিট সম্পদ: <strong>${money(net)}</strong><br>আপনার দেওয়া নিসাব ${money(n)} অনুযায়ী নিসাব পূর্ণ হয়নি।`}
+function exportData(){const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),data:db},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='my-assets-backup.json';a.click();URL.revokeObjectURL(a.href)}
+function importData(e){const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const x=JSON.parse(rd.result);const d=x.data||x;if(!['assets','receivables','debts','business','investments'].every(k=>Array.isArray(d[k])))throw Error();if(!confirm('বর্তমান তথ্যের জায়গায় ব্যাকআপের তথ্য বসবে। চালাবেন?'))return;db=d;save();alert('ব্যাকআপ ফিরিয়ে আনা হয়েছে।')}catch(err){alert('ফাইলটি সঠিক ব্যাকআপ নয়।')}e.target.value=''};rd.readAsText(f)}
+function clearAll(){if(confirm('সব হিসাব স্থায়ীভাবে মুছে ফেলবেন? আগে ব্যাকআপ নিন।')&&confirm('নিশ্চিত?')){db={assets:[],receivables:[],debts:[],business:[],investments:[]};save()}}
+document.getElementById('tabs').addEventListener('click',e=>{const b=e.target.closest('button[data-tab]');if(!b)return;document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===b.dataset.tab))});
+render();
+</script>
+</body></html>
