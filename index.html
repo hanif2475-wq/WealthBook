@@ -183,15 +183,6 @@ function bytesToB64(bytes){
   for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
   return btoa(binary);
 }
-async function exportEncryptedBackup(){
-  const pw=val('backupPassword');
-  const status=$('encryptedBackupResult');
-  if(!pw||pw.length<8){alert('কমপক্ষে ৮ অক্ষরের ব্যাকআপ পাসওয়ার্ড দিন।');return}
-  if(!window.isSecureContext||!window.crypto||!crypto.subtle){
-    alert('এনক্রিপশন চালাতে HTTPS-এ অ্যাপ খুলুন। GitHub Pages-এর https ঠিকানা ব্যবহার করুন।');
-    if(status)status.textContent='নিরাপদ HTTPS সংযোগ ছাড়া এনক্রিপ্টেড ব্যাকআপ তৈরি করা যাবে না।';
-    return;
-  }
   try{
     if(status)status.textContent='এনক্রিপ্টেড ব্যাকআপ তৈরি হচ্ছে…';
     const salt=crypto.getRandomValues(new Uint8Array(16));
