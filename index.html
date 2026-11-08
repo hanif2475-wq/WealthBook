@@ -181,7 +181,37 @@ async function deriveKey(password,salt){let enc=new TextEncoder(),base=await cry
 function bytesToB64(bytes){
   let binary='';
   for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));
-  return btoa(
+  return btoa(binary);
+}
+async function exportEncryptedBackup(){
+  const pw=val('backupPassword');
+  const status=$('encryptedBackupResult');
+  if(!pw||pw.length<8){alert('কমপক্ষে ৮ অক্ষরের ব্যাকআপ পাসওয়ার্ড দিন।');return}
+  if(!window.isSecureContext||!window.crypto||!crypto.subtle){
+    alert('এনক্রিপশন চালাতে HTTPS-এ অ্যাপ খুলুন। GitHub Pages-এর https ঠিকানা ব্যবহার করুন।');
+    if(status)status.textContent='নিরাপদ HTTPS সংযোগ ছাড়া এনক্রিপ্টেড ব্যাকআপ তৈরি করা যাবে না।';
+    return;
+  }
+  try{
+    if(status)status.textContent='এনক্রিপ্টেড ব্যাকআপ তৈরি হচ্ছে…';
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    const iv=crypto.getRandomValues(new Uint8Array(12));
+    const key=await deriveKey(pw,salt);
+    const plain=new TextEncoder().encode(JSON.stringify(db));
+    const cipher=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},key,plain));
+    const payload={format:'amar-shompod-encrypted-v1',salt:bytesToB64(salt),iv:bytesToB64(iv),data:bytesToB64(cipher)};
+    const blob=new Blob([JSON.stringify(payload)],{type:'application/octet-stream'});
+    const fileName='amar-shompod-encrypted-'+localDate()+'.enc';
+    encryptedBackupFile=new File([blob],fileName,{type:'application/octet-stream'});
+    if(encryptedBackupUrl)URL.revokeObjectURL(encryptedBackupUrl);
+    encryptedBackupUrl=URL.createObjectURL(blob);
+    if(status){
+      status.innerHTML='ব্যাকআপ তৈরি হয়েছে। নিচের ডাউনলোড চাপুন অথবা Share দিয়ে Save to Files → iCloud Drive নির্বাচন করুন।<div class="btnrow"><a class="btn" id="encryptedDownloadLink" href="'+encryptedBackupUrl+'" download="'+fileName+'" style="display:inline-block;text-decoration:none">ডাউনলোড</a><button class="btn secondary" type="button" onclick="shareEncryptedBackup()">Share / iCloud Drive</button></div>';
+    }
+  }catch(e){
+    if(status)status.textContent='এনক্রিপ্টেড ব্যাকআপ তৈরি হয়নি: '+(e.message||e);
+    alert('এনক্রিপ্টেড ব্যাকআপ তৈরি হয়নি: '+(e.message||e));
+  }
 }
 async function shareEncryptedBackup(){
   if(!encryptedBackupFile){alert('আগে এনক্রিপ্টেড ব্যাকআপ তৈরি করুন।');return}
@@ -196,6 +226,35 @@ async function shareEncryptedBackup(){
   }catch(e){
     if(e.name!=='AbortError')alert('Share করা যায়নি। ডাউনলোড বাটন ব্যবহার করুন। '+(e.message||''));
   }
+}
+async function importEncryptedBackup(e){
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  try{
+    const obj=JSON.parse(await f.text());
+    if(obj.format!=='amar-shompod-encrypted-v1'){
+      if(!confirm('এটি এনক্রিপ্টেড ফাইল নয়। সাধারণ ব্যাকআপ হিসেবে রিস্টোর করবেন?'))return;
+      const x=obj;if(!Array.isArray(x.assets))throw Error('ব্যাকআপ ফাইল সঠিক নয়');
+      db={...blank(),...x};normalize();
+      if(!persist())throw Error('ডিভাইসে তথ্য সংরক্ষণ করা যায়নি');
+      fillCurrencies();showRates();set('homeCurrency',db.homeCurrency);set('reportCurrency',db.homeCurrency);renderAll();
+      alert('সাধারণ ব্যাকআপ রিস্টোর হয়েছে。');return;
+    }
+    const pw=val('backupPassword');if(!pw)throw Error('ব্যাকআপ পাসওয়ার্ড লিখুন');
+    if(!window.isSecureContext||!crypto.subtle)throw Error('রিস্টোরের জন্য HTTPS প্রয়োজন');
+    const from=b=>Uint8Array.from(atob(b),c=>c.charCodeAt(0));
+    const salt=from(obj.salt),iv=from(obj.iv),data=from(obj.data);
+    const key=await deriveKey(pw,salt);
+    const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,data);
+    const x=JSON.parse(new TextDecoder().decode(plain));
+    if(!Array.isArray(x.assets))throw Error('ব্যাকআপের তথ্য সঠিক নয়');
+    if(!confirm('বর্তমান তথ্যের জায়গায় ব্যাকআপ বসবে। আগে বর্তমান ডেটার ব্যাকআপ নিয়েছেন তো? চালিয়ে যাবেন?'))return;
+    db={...blank(),...x};normalize();
+    if(!persist())throw Error('ডিভাইসে তথ্য সংরক্ষণ করা যায়নি');
+    fillCurrencies();showRates();set('homeCurrency',db.homeCurrency);set('reportCurrency',db.homeCurrency);renderAll();
+    alert('এনক্রিপ্টেড ব্যাকআপ রিস্টোর হয়েছে।');
+  }catch(err){alert('রিস্টোর হয়নি। পাসওয়ার্ড বা ফাইল পরীক্ষা করুন।\n'+(err.message||err))}
+  finally{e.target.value=''}
+}
 async function hashPin(pin,salt){let b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+pin));return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
 async function setAppPin(){let a=val('newPin'),b=val('confirmPin');if(!/^\d{6}$/.test(a)||a!==b)return alert('একই ৬ সংখ্যার পাসকোড দুই ঘরে লিখুন।');let salt=Array.from(crypto.getRandomValues(new Uint8Array(16))).map(x=>x.toString(16).padStart(2,'0')).join('');db.security=db.security||{};db.security.pinSalt=salt;db.security.pinHash=await hashPin(a,salt);persist();set('newPin','');set('confirmPin','');$('securityStatus').textContent='পাসকোড চালু হয়েছে।';alert('অ্যাপ পাসকোড সেট হয়েছে।')}
 function b64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)))}
