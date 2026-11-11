@@ -178,7 +178,7 @@ $('bizList').innerHTML=db.business.length?db.business.map(x=>listItem(x.name,`${
 $('invList').innerHTML=db.investments.length?db.investments.map(x=>listItem(x.name,`${x.type} • ${x.currency} • ক্রয় ${x.cost} • বর্তমান ${x.value}`,money(conv(x.value,x.currency),c),'investments',x.id)).join(''):`<div class="empty">${tr('noRecords')}</div>`;
 let year=(val('zakatDate')||localDate()).slice(0,4),paid=db.zakatPayments.filter(x=>(x.date||'').slice(0,4)===year).reduce((s,x)=>s+num(x.amount),0),allPaid=db.zakatPayments.reduce((s,x)=>s+num(x.amount),0);$('zakatPayments').innerHTML=`<p>${year} সালে পরিশোধ: <b>${money(paid,'BDT')}</b> • সব বছরের মোট: <b>${money(allPaid,'BDT')}</b></p>`+db.zakatPayments.map(x=>`<div class="item"><div><b>${money(x.amount,'BDT')}</b><small>${esc(x.date)} • ${esc(x.note||'')}</small></div><div class="item-actions"><button class="btn secondary" style="padding:6px 8px;font-size:11px" onclick="editRec('zakatPayments','${x.id}')">এডিট</button><button class="btn danger" style="padding:6px 8px;font-size:11px" onclick="removeRec('zakatPayments','${x.id}')">মুছুন</button></div></div>`).join('');
 
-$('transferList').innerHTML=db.transfers.length?db.transfers.map(x=>{let a=db.assets.find(z=>z.id===x.fromAssetId),b=db.assets.find(z=>z.id===x.toAssetId);return listItem(`${a?.name||'অ্যাকাউন্ট'} → ${b?.name||'অ্যাকাউন্ট'}`,`${x.amount} ${x.fromCurrency} → ${x.received} ${x.toCurrency} • ${x.date}`,money(conv(x.amount,x.fromCurrency),'BDT'),'transfers',x.id)}).join(''):`<div class="empty">কোনো স্থানান্তর নেই</div>`;
+$('transferList').innerHTML=db.transfers.length?db.transfers.map(x=>{return listItem(`${accountName(x.fromAssetId)||'অ্যাকাউন্ট'} → ${accountName(x.toAssetId)||'অ্যাকাউন্ট'}`,`${x.amount} ${x.fromCurrency} → ${x.received} ${x.toCurrency} • ${x.date}`,money(conv(x.amount,x.fromCurrency),'BDT'),'transfers',x.id)}).join(''):`<div class="empty">কোনো স্থানান্তর নেই</div>`;
 $('donList').innerHTML=db.donations.length?db.donations.map(x=>listItem(x.recipient,`${x.category} • ${x.date} • ${x.amount} ${x.currency}`,money(conv(x.amount,x.currency),c),'donations',x.id)).join(''):`<div class="empty">কোনো দানের রেকর্ড নেই</div>`;
 $('billList').innerHTML=db.bills.length?db.bills.map(x=>listItem(x.name,`${x.category} • ${x.period||x.frequency} • শেষ তারিখ ${x.dueDate||'—'} • ${x.status==='paid'?'পরিশোধিত':'অপরিশোধিত'}`,money(conv(x.amount,x.currency),c),'bills',x.id)+(x.frequency!=='once'?`<div class="btnrow"><button class="btn secondary" onclick="generateNextBill('${x.id}')">পরবর্তী বিল তৈরি</button></div>`:'')).join(''):`<div class="empty">কোনো বিল নেই</div>`;
 calculateZakatSilent();$('reportZakat').textContent=money(db.zakatSummary?.due||0,c);$('reportZakatPaid').textContent=money(paid,c);
@@ -224,43 +224,14 @@ function docMarkup(docs){if(!docs?.length)return '<p class="small">কোনো 
 function accountCategoryOf(a){return a.accountCategory||(/bKash|Nagad|Rocket|মোবাইল/i.test(a.name||'')?'mobile':/Cash Money|নগদ টাকা/i.test(a.name||'')?'cash':'bank')}
 function accountKey(a){return accountCategoryOf(a)+'|'+String(a.currency||'BDT')+'|'+String(a.name||'').trim().toLowerCase().replace(/\s+/g,' ')}
 function accountId(a){return 'acct:'+encodeURIComponent(accountKey(a))}
-function accountMembers(idv){if(!idv)return [];let raw=String(idv);if(raw.startsWith('acct:')){let decoded='';try{decoded=decodeURIComponent(raw.slice(5))}catch(e){decoded=raw.slice(5)}let parts=decoded.split('|'),cur=(parts[1]||'').trim().toUpperCase(),nm=parts.slice(2).join('|').trim().toLowerCase().replace(/\s+/g,' ');let all=db.assets.filter(a=>a.type==='bank');let exact=all.filter(a=>accountKey(a).toLowerCase()===decoded.toLowerCase());if(exact.length)return exact;let byName=all.filter(a=>(!cur||String(a.currency||'BDT').toUpperCase()===cur)&&String(a.name||'').trim().toLowerCase().replace(/\s+/g,' ')===nm);if(byName.length)return byName;let aliases={'nagad mob':'nagad mobile banking','nagad':'nagad mobile banking','bkash mob':'bkash mobile banking','bkash':'bkash mobile banking','rocket mob':'rocket mobile banking','rocket':'rocket mobile banking','cash money':'cash money / নগদ টাকা'};let alias=aliases[nm];return alias?all.filter(a=>(!cur||String(a.currency||'BDT').toUpperCase()===cur)&&String(a.name||'').trim().toLowerCase().replace(/\s+/g,' ')===alias):[]}let a=db.assets.find(x=>x.id===raw);if(!a)return [];return a.type==='bank'?db.assets.filter(x=>x.type==='bank'&&accountKey(x)===accountKey(a)):[a]}
+function accountMembers(idv){if(!idv)return [];if(String(idv).startsWith('acct:')){let k;try{k=decodeURIComponent(String(idv).slice(5))}catch(e){return []}return db.assets.filter(a=>a.type==='bank'&&accountKey(a)===k)}let a=db.assets.find(x=>x.id===idv&&x.type==='bank');return a?db.assets.filter(x=>x.type==='bank'&&accountKey(x)===accountKey(a)):[]}
 function accountMatches(storedId,a){if(!storedId||!a)return false;if(storedId===a.id)return true;let members=accountMembers(storedId);return members.some(x=>x.id===a.id)}
 function accountSelection(idv){if(!idv)return '';if(String(idv).startsWith('acct:'))return idv;let a=db.assets.find(x=>x.id===idv&&x.type==='bank');return a?accountId(a):idv}
 function accountCurrency(idv){let m=accountMembers(idv);return m[0]?.currency||'BDT'}
-function accountName(idv){
- if(!idv)return '';
- const raw=String(idv).trim();
- const norm=v=>String(v||'').normalize('NFKC').trim().toLowerCase().replace(/\s+/g,' ');
- const direct=(db.assets||[]).find(a=>String(a.id)===raw);
- if(direct?.name)return direct.name;
- let decoded=raw;
- if(raw.toLowerCase().startsWith('acct:')){try{decoded=decodeURIComponent(raw.slice(5))}catch(e){decoded=raw.slice(5)}}
- const parts=decoded.split('|');
- // Account keys are category|currency|account name. Also tolerate older keys.
- let candidate=parts.length>=3?parts.slice(2).join('|').trim():parts[parts.length-1].trim();
- const low=norm(candidate);
- const aliases={
-  'nagad mob':'Nagad mobile banking','nagad':'Nagad mobile banking','nagad mobile':'Nagad mobile banking',
-  'bkash mob':'bKash mobile banking','bkash':'bKash mobile banking','bkash mobile':'bKash mobile banking',
-  'rocket mob':'Rocket mobile banking','rocket':'Rocket mobile banking','rocket mobile':'Rocket mobile banking',
-  'cash money':'Cash Money / নগদ টাকা','cash':'Cash Money / নগদ টাকা'
- };
- const alias=aliases[low];
- const cur=parts.length>=2?norm(parts[1]):'';
- const bankAssets=(db.assets||[]).filter(a=>a.type==='bank');
- const matched=bankAssets.find(a=>{
-  const an=norm(a.name); const sameCurrency=!cur||norm(a.currency||'BDT')===cur;
-  return sameCurrency&&(an===low||(alias&&an===norm(alias)));
- });
- if(matched?.name)return matched.name;
- if(alias)return alias;
- if(candidate && !/^(mobile|bank|cash|wallet)$/i.test(candidate))return candidate;
- return 'অ্যাকাউন্ট';
-}
+function accountName(idv){if(!idv)return '';let raw=String(idv),direct=db.assets.find(a=>a.id===raw&&a.type==='bank');if(direct?.name)return direct.name;let members=accountMembers(raw);if(members[0]?.name)return members[0].name;if(raw.startsWith('acct:')){let decoded=raw.slice(5);try{decoded=decodeURIComponent(decoded);if(decoded.includes('%'))decoded=decodeURIComponent(decoded)}catch(e){}let parts=decoded.split('|'),currency=(parts[1]||'').trim().toUpperCase(),name=parts.slice(2).join('|').trim().toLowerCase().replace(/\s+/g,' ');const aliases={'nagad':'Nagad mobile banking','nagad mob':'Nagad mobile banking','nagad mobile':'Nagad mobile banking','bkash':'bKash mobile banking','bkash mob':'bKash mobile banking','bkash mobile':'bKash mobile banking','rocket':'Rocket mobile banking','rocket mob':'Rocket mobile banking','rocket mobile':'Rocket mobile banking','cash money':'Cash Money / নগদ টাকা','cash money / নগদ টাকা':'Cash Money / নগদ টাকা'};let wanted=aliases[name]||name;let found=db.assets.find(a=>a.type==='bank'&&(!currency||String(a.currency||'BDT').toUpperCase()===currency)&&String(a.name||'').trim().toLowerCase().replace(/\s+/g,' ')===wanted.toLowerCase());if(found?.name)return found.name;if(aliases[name])return aliases[name];if(name)return name.replace(/(^|\s)\S/g,c=>c.toUpperCase())}return 'অ্যাকাউন্ট'}
 function accountBalance(idv){return accountMembers(idv).reduce((sum,a)=>sum+assetBDT(a),0)}
 function bankAccountGroups(){let map=new Map();db.assets.filter(a=>a.type==='bank').forEach(a=>{let k=accountKey(a);if(!map.has(k))map.set(k,{id:accountId(a),name:a.name,currency:a.currency||'BDT',category:accountCategoryOf(a)})});return [...map.values()]}
-function bankAssetOptions(selected=''){let html='<option value="">অ্যাকাউন্ট নির্বাচন করুন</option>'+bankAccountGroups().map(a=>`<option value="${esc(a.id)}">${esc(a.name)} (${a.currency})</option>`).join('');return html}
+function bankAssetOptions(selected=''){let html='<option value="">অ্যাকাউন্ট নির্বাচন করুন</option>'+bankAccountGroups().map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('');return html}
 function bankAssetOptionsByCurrency(currency,selected=''){return '<option value="">অ্যাকাউন্ট নির্বাচন করুন</option>'+bankAccountGroups().filter(a=>a.currency===(currency||'BDT')).map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join('')}
 function populateExpenseSources(selected=''){const sel=$('txSource');if(!sel)return;let priorDest=val('txDestination')||'';sel.innerHTML=bankAssetOptions(selected);set('txSource',accountSelection(selected));const dst=$('txDestination');if(dst){dst.innerHTML=bankAssetOptions(priorDest);set('txDestination',accountSelection(priorDest))}}
 function updateExpenseSourceUI(){const show=['expense','donation'].includes(val('txType')),income=val('txType')==='income';$('expenseSourceWrap')?.classList.toggle('hidden',!show);$('incomeDestinationWrap')?.classList.toggle('hidden',!income);populateExpenseSources();if(show)set('txSource',accountSelection(editing?.kind==='transactions'?(db.transactions.find(x=>x.id===editing.id)?.sourceAssetId||''):''));if(income)set('txDestination',accountSelection(editing?.kind==='transactions'?(db.transactions.find(x=>x.id===editing.id)?.destinationAssetId||''):''))}
