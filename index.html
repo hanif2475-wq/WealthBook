@@ -113,7 +113,7 @@ let db,editing=null;const pendingDocs={};let docReadTasks={};const $=id=>documen
 function blank(){return {assets:[],transactions:[],receivables:[],debts:[],business:[],investments:[],rates:{...DEFAULT_RATES},goldRates:{},zakatPayments:[],remittances:[],transfers:[],donations:[],bills:[],nisab:0,zakatDate:'',homeCurrency:'BDT',language:'bn',zakatSummary:null,recurring:[],reminders:{hawlStart:'',zakatReminder:''},security:{pinHash:'',pinSalt:'',biometricId:''},chartHidden:false,budgets:[],savingsGoals:[]}}
 function id(){return 'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}function localDate(){let d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function num(v){return Math.max(0,Number(v)||0)}function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function conv(a,c){return num(a)*(Number(db.rates[c||'BDT'])||0)}function money(v,c=val('homeCurrency')||'BDT'){let n=(Number(v)||0)/(Number(db.rates[c])||1),amount=Math.round(n).toLocaleString('en-US');return c==='BDT'?(db&&db.language==='en'?'BDT ':'৳')+amount:c+' '+amount}
+function conv(a,c){return num(a)*(Number(db.rates[c||'BDT'])||0)}function money(v,c=val('homeCurrency')||'BDT'){let n=(Number(v)||0)/(Number(db.rates[c])||1),locale=db&&db.language==='en'?'en-US':'bn-BD',amount=Math.round(n).toLocaleString(locale);return c==='BDT'?(db&&db.language==='en'?'BDT ':'৳')+amount:c+' '+amount}
 function tr(k){return (T[db.language]||T.bn)[k]||k}
 // Complete bilingual labels for controls and dynamically rendered descriptions.
 const EXTRA_EN={
