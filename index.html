@@ -35,6 +35,7 @@ dialog{border:0;border-radius:16px;width:min(94%,520px);padding:18px;box-shadow:
 
 #lockScreen{position:fixed;inset:0;background:#10251f;color:white;z-index:9999;display:none;align-items:center;justify-content:center;padding:24px}#lockScreen .lockbox{background:white;color:#18251f;border-radius:18px;padding:22px;width:min(100%,390px)}#lockScreen input{margin:8px 0}.chartwrap{height:230px;position:relative}canvas{width:100%;height:220px}.searchresults{max-height:360px;overflow:auto}.print-only{display:none}
 @media print{@page{margin:12mm}html,body{background:#fff!important;color:#111!important;padding:0!important;margin:0!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}header,nav,.no-print,button{display:none!important}main{max-width:none!important;padding:0!important}.page{display:none!important}#reports.page{display:block!important}#reports .card{box-shadow:none!important;border:0!important;padding:0!important;margin:0!important}#reports .stat{break-inside:avoid;border:1px solid #ddd}#reports h2,#reports h3{color:#111!important}.print-only{display:block!important}.chartwrap{break-inside:avoid}canvas{max-width:100%}}
+#goldRates .grid2>div{min-width:0}#goldRates input[type=number]{width:100%;min-width:0;box-sizing:border-box;padding:13px 10px;font-size:16px;letter-spacing:.1px}
 .calc-field-wrap{display:flex;align-items:stretch;gap:6px;width:100%;min-width:0}.calc-field-wrap>input{flex:1;min-width:0;width:100%}.calc-field-button{flex:0 0 42px;min-width:42px;border:1px solid #d9b45b;border-radius:10px;background:#fff8e8;color:#17243b;font-size:18px;cursor:pointer;padding:4px}.calc-field-button:active{transform:scale(.97)}
 </style>
 </head>
@@ -440,7 +441,7 @@ function shareCurrentFormImage(btn){
  shareCanvasCard(title,lines.slice(0,24),'wealthbook-page.png');
 }
 
-function installFieldCalculators(){document.querySelectorAll('input[type="number"]').forEach((el,i)=>{if(el.id==='calcDisplay'||el.dataset.calcInstalled)return;el.dataset.calcInstalled='1';if(!el.id)el.id='wb-number-'+i+'-'+Math.random().toString(36).slice(2,7);const wrap=document.createElement('span');wrap.className='calc-field-wrap';el.parentNode.insertBefore(wrap,el);wrap.appendChild(el);const b=document.createElement('button');b.type='button';b.className='calc-field-button';b.textContent='🧮';b.title='ক্যালকুলেটর খুলুন';b.setAttribute('aria-label','ক্যালকুলেটর খুলুন');b.addEventListener('click',()=>openCalc(el.id));wrap.appendChild(b)});}
+function installFieldCalculators(){document.querySelectorAll('input[type="number"]').forEach((el,i)=>{if(el.id==='calcDisplay'||/^rate(24|22|21|18)$/.test(el.id)||el.dataset.calcInstalled)return;el.dataset.calcInstalled='1';if(!el.id)el.id='wb-number-'+i+'-'+Math.random().toString(36).slice(2,7);const wrap=document.createElement('span');wrap.className='calc-field-wrap';el.parentNode.insertBefore(wrap,el);wrap.appendChild(el);const b=document.createElement('button');b.type='button';b.className='calc-field-button';b.textContent='🧮';b.title='ক্যালকুলেটর খুলুন';b.setAttribute('aria-label','ক্যালকুলেটর খুলুন');b.addEventListener('click',()=>openCalc(el.id));wrap.appendChild(b)});}
 function installShareImageButtons(){
  document.querySelectorAll('.page .btnrow button[onclick]').forEach(saveBtn=>{
    const action=saveBtn.getAttribute('onclick')||'';
